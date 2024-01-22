@@ -13,8 +13,14 @@ typedef _mode_t	mode_t;
 #endif	/* Not _MODE_T_ */
 
 #ifndef _SSIZE_T_
+#ifdef _AMD64
 #define _SSIZE_T_
+typedef long long _ssize_t;
+#else
 typedef long _ssize_t;
+#endif // _AMD64
+
+
 
 #ifndef	_OFF_T_
 #define	_OFF_T_
