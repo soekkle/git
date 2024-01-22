@@ -779,7 +779,7 @@ static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
  */
 static int has_valid_directory_prefix(wchar_t *wfilename)
 {
-	int n = wcslen(wfilename);
+	ssize_t n = wcslen(wfilename);
 
 	while (n > 0) {
 		wchar_t c = wfilename[--n];
@@ -888,7 +888,7 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
  */
 static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
-	int namelen;
+	ssize_t namelen;
 	char alt_name[PATH_MAX];
 
 	if (!do_lstat(follow, file_name, buf))
@@ -1271,7 +1271,8 @@ static const char *parse_interpreter(const char *cmd)
 {
 	static char buf[100];
 	char *p, *opt;
-	int n, fd;
+	ssize_t n;
+	int fd;
 
 	/* don't even try a .exe */
 	n = strlen(cmd);
@@ -1336,7 +1337,7 @@ static char *path_lookup(const char *cmd, int exe_only)
 {
 	const char *path;
 	char *prog = NULL;
-	int len = strlen(cmd);
+	size_t len = strlen(cmd);
 	int isexe = len >= 4 && !strcasecmp(cmd+len-4, ".exe");
 
 	if (strpbrk(cmd, "/\\"))
@@ -1953,7 +1954,7 @@ char *mingw_getenv(const char *name)
 #define GETENV_MAX_RETAIN 64
 	static char *values[GETENV_MAX_RETAIN];
 	static int value_counter;
-	int len_key, len_value;
+	size_t len_key, len_value;
 	wchar_t *w_key;
 	char *value;
 	wchar_t w_value[32768];
@@ -1965,7 +1966,9 @@ char *mingw_getenv(const char *name)
 	/* We cannot use xcalloc() here because that uses getenv() itself */
 	w_key = calloc(len_key, sizeof(wchar_t));
 	if (!w_key)
-		die("Out of memory, (tried to allocate %u wchar_t's)", len_key);
+		die("Out of memory, (tried to allocate %"
+			    PRIuMAX" wchar_t's)",
+		    (uintmax_t)len_key);
 	xutftowcs(w_key, name, len_key);
 	/* GetEnvironmentVariableW() only sets the last error upon failure */
 	SetLastError(ERROR_SUCCESS);
@@ -1980,7 +1983,8 @@ char *mingw_getenv(const char *name)
 	/* We cannot use xcalloc() here because that uses getenv() itself */
 	value = calloc(len_value, sizeof(char));
 	if (!value)
-		die("Out of memory, (tried to allocate %u bytes)", len_value);
+	    die("Out of memory, (tried to allocate %" PRIuMAX " bytes)",
+	    (uintmax_t)len_value);
 	xwcstoutf(value, w_value, len_value);
 
 	/*
@@ -1998,7 +2002,7 @@ char *mingw_getenv(const char *name)
 
 int mingw_putenv(const char *namevalue)
 {
-	int size;
+	size_t size;
 	wchar_t *wide, *equal;
 	BOOL result;
 
@@ -2008,7 +2012,8 @@ int mingw_putenv(const char *namevalue)
 	size = strlen(namevalue) * 2 + 1;
 	wide = calloc(size, sizeof(wchar_t));
 	if (!wide)
-		die("Out of memory, (tried to allocate %u wchar_t's)", size);
+		die("Out of memory, (tried to allocate %" PRIuMAX " wchar_t's)",
+		    (uintmax_t)size);
 	xutftowcs(wide, namevalue, size);
 	equal = wcschr(wide, L'=');
 	if (!equal)
@@ -3082,7 +3087,8 @@ static void maybe_redirect_std_handles(void)
  */
 int wmain(int argc, const wchar_t **wargv)
 {
-	int i, maxlen, exit_status;
+	int exit_status;
+	size_t i, maxlen;
 	char *buffer, **save;
 	const char **argv;
 

@@ -13,8 +13,15 @@ typedef _mode_t	mode_t;
 #endif	/* Not _MODE_T_ */
 
 #ifndef _SSIZE_T_
+#ifdef _WIN64
 #define _SSIZE_T_
+typedef __int64 _ssize_t;
+#pragma message("Compiling on Win64")
+#else
 typedef long _ssize_t;
+#endif // _AMD64
+
+
 
 #ifndef	_OFF_T_
 #define	_OFF_T_
