@@ -241,7 +241,7 @@ static struct patch_mode patch_mode_worktree_nothead = {
 };
 
 struct hunk_header {
-	unsigned long old_offset, old_count, new_offset, new_count;
+	size_t old_offset, old_count, new_offset, new_count;
 	/*
 	 * Start/end offsets to the extra text after the second `@@` in the
 	 * hunk header, e.g. the function signature. This is expected to
@@ -321,7 +321,7 @@ static void setup_child_process(struct add_p_state *s,
 }
 
 static int parse_range(const char **p,
-		       unsigned long *offset, unsigned long *count)
+		       size_t *offset, size_t *count)
 {
 	char *pend;
 
@@ -672,8 +672,8 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		 */
 		const char *p;
 		size_t len;
-		unsigned long old_offset = header->old_offset;
-		unsigned long new_offset = header->new_offset;
+		size_t old_offset = header->old_offset;
+		size_t new_offset = header->new_offset;
 
 		if (!colored) {
 			p = s->plain.buf + header->extra_start;
@@ -1624,10 +1624,11 @@ soft_increment:
 			else if (0 < response && response <= file_diff->hunk_nr)
 				hunk_index = response - 1;
 			else
-				err(s, Q_("Sorry, only %d hunk available.",
-					  "Sorry, only %d hunks available.",
+				err(s,
+				    Q_("Sorry, only "PRIuMAX" hunk available.",
+				       "Sorry, only "PRIuMAX" hunks available.",
 					  file_diff->hunk_nr),
-				    (int)file_diff->hunk_nr);
+					  file_diff->hunk_nr);
 		} else if (s->answer.buf[0] == '/') {
 			regex_t regex;
 			int ret;
