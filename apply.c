@@ -413,9 +413,9 @@ static int read_patch_file(struct strbuf *sb, int fd)
 	return 0;
 }
 
-static unsigned long linelen(const char *buffer, unsigned long size)
+static size_t linelen(const char *buffer, size_t size)
 {
-	unsigned long len = 0;
+	size_t len = 0;
 	while (size--) {
 		len++;
 		if (*buffer++ == '\n')
@@ -687,7 +687,7 @@ static char *find_name_common(struct strbuf *root,
 	 * or "file~").
 	 */
 	if (def) {
-		int deflen = strlen(def);
+		size_t deflen = strlen(def);
 		if (deflen < len && !strncmp(start, def, deflen))
 			return squash_slash(xstrdup(def));
 	}
@@ -1087,7 +1087,7 @@ static int gitdiff_index(struct gitdiff_data *state,
 	 */
 	const char *ptr, *eol;
 	int len;
-	const unsigned hexsz = the_hash_algo->hexsz;
+	const size_t hexsz = the_hash_algo->hexsz;
 
 	ptr = strchr(line, '.');
 	if (!ptr || ptr[1] != '.' || hexsz < ptr - line)
@@ -1130,7 +1130,7 @@ static int gitdiff_unrecognized(struct gitdiff_data *state UNUSED,
  */
 static const char *skip_tree_prefix(int p_value,
 				    const char *line,
-				    int llen)
+				    size_t llen)
 {
 	int nslash;
 	int i;
@@ -1157,7 +1157,7 @@ static const char *skip_tree_prefix(int p_value,
  */
 static char *git_header_name(int p_value,
 			     const char *line,
-			     int llen)
+			     ssize_t llen)
 {
 	const char *name;
 	const char *second = NULL;
@@ -1312,15 +1312,15 @@ static int check_header_line(int linenr, struct patch *patch)
 	return 0;
 }
 
-int parse_git_diff_header(struct strbuf *root,
+size_t parse_git_diff_header(struct strbuf *root,
 			  int *linenr,
 			  int p_value,
 			  const char *line,
-			  int len,
-			  unsigned int size,
+			  size_t len,
+			  size_t size,
 			  struct patch *patch)
 {
-	unsigned long offset;
+	size_t offset;
 	struct gitdiff_data parse_hdr_state;
 
 	/* A git diff has explicit new/delete information, so we don't guess */
@@ -1377,7 +1377,7 @@ int parse_git_diff_header(struct strbuf *root,
 			break;
 		for (i = 0; i < ARRAY_SIZE(optable); i++) {
 			const struct opentry *p = optable + i;
-			int oplen = strlen(p->str);
+			size_t oplen = strlen(p->str);
 			int res;
 			if (len < oplen || memcmp(p->str, line, oplen))
 				continue;
@@ -1429,7 +1429,8 @@ static int parse_num(const char *line, unsigned long *p)
 static int parse_range(const char *line, int len, int offset, const char *expect,
 		       unsigned long *p1, unsigned long *p2)
 {
-	int digits, ex;
+	int digits;
+	size_t ex;
 
 	if (offset < 0 || offset >= len)
 		return -1;
@@ -1464,7 +1465,7 @@ static int parse_range(const char *line, int len, int offset, const char *expect
 	return offset + ex;
 }
 
-static void recount_diff(const char *line, int size, struct fragment *fragment)
+static void recount_diff(const char *line, size_t size, struct fragment *fragment)
 {
 	int oldlines = 0, newlines = 0, ret = 0;
 
@@ -1474,7 +1475,7 @@ static void recount_diff(const char *line, int size, struct fragment *fragment)
 	}
 
 	for (;;) {
-		int len = linelen(line, size);
+		size_t len = linelen(line, size);
 		size -= len;
 		line += len;
 
@@ -1542,11 +1543,11 @@ static int parse_fragment_header(const char *line, int len, struct fragment *fra
  */
 static int find_header(struct apply_state *state,
 		       const char *line,
-		       unsigned long size,
+		       size_t size,
 		       int *hdrsize,
 		       struct patch *patch)
 {
-	unsigned long offset, len;
+	size_t offset, len;
 
 	patch->is_toplevel_relative = 0;
 	patch->is_rename = patch->is_copy = 0;
@@ -2131,7 +2132,7 @@ static int use_patch(struct apply_state *state, struct patch *p)
  *   the number of bytes consumed otherwise,
  *     so that the caller can call us again for the next patch.
  */
-static int parse_chunk(struct apply_state *state, char *buffer, unsigned long size, struct patch *patch)
+static int parse_chunk(struct apply_state *state, char *buffer, size_t size, struct patch *patch)
 {
 	int hdrsize, patchsize;
 	int offset = find_header(state, buffer, size, &hdrsize, patch);
@@ -2490,7 +2491,7 @@ static int match_fragment(struct apply_state *state,
 	struct strbuf fixed = STRBUF_INIT;
 	char *fixed_buf;
 	size_t fixed_len;
-	int preimage_limit;
+	ssize_t preimage_limit;
 	int ret;
 
 	if (preimage->line_nr + current_lno <= img->line_nr) {

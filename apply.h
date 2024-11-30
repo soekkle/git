@@ -166,12 +166,12 @@ int check_apply_state(struct apply_state *state, int force_apply);
  *
  * Returns -1 on failure, the length of the parsed header otherwise.
  */
-int parse_git_diff_header(struct strbuf *root,
+size_t parse_git_diff_header(struct strbuf *root,
 			  int *linenr,
 			  int p_value,
 			  const char *line,
-			  int len,
-			  unsigned int size,
+			  size_t len,
+			  size_t size,
 			  struct patch *patch);
 
 void release_patch(struct patch *patch);
