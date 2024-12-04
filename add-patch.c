@@ -699,12 +699,12 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		else
 			new_offset += delta;
 
-		strbuf_addf(out, "@@ -%lu", old_offset);
+		strbuf_addf(out, "@@ -%"PRIuPTR, old_offset);
 		if (header->old_count != 1)
-			strbuf_addf(out, ",%lu", header->old_count);
-		strbuf_addf(out, " +%lu", new_offset);
+			strbuf_addf(out, ",%"PRIuPTR, header->old_count);
+		strbuf_addf(out, " +%"PRIuPTR, new_offset);
 		if (header->new_count != 1)
-			strbuf_addf(out, ",%lu", header->new_count);
+			strbuf_addf(out, ",%"PRIuPTR, header->new_count);
 		strbuf_addstr(out, " @@");
 
 		if (len)
@@ -1065,10 +1065,10 @@ next_hunk_line:
 
 	/* last hunk simply gets the rest */
 	if (header->old_offset != remaining.old_offset)
-		BUG("miscounted old_offset: %lu != %lu",
+		BUG("miscounted old_offset: %"PRIuPTR" != %"PRIuPTR,
 		    header->old_offset, remaining.old_offset);
 	if (header->new_offset != remaining.new_offset)
-		BUG("miscounted new_offset: %lu != %lu",
+		BUG("miscounted new_offset: %"PRIuPTR" != %"PRIuPTR,
 		    header->new_offset, remaining.new_offset);
 	header->old_count = remaining.old_count;
 	header->new_count = remaining.new_count;
@@ -1353,7 +1353,8 @@ static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
 	struct strbuf *plain = &s->plain;
 	size_t len = out->len, i;
 
-	strbuf_addf(out, " -%lu,%lu +%lu,%lu ",
+	strbuf_addf(out,
+		    " -%"PRIuPTR",%"PRIuPTR" +%"PRIuPTR",%"PRIuPTR" ",
 		    header->old_offset, header->old_count,
 		    header->new_offset, header->new_count);
 	if (out->len - len < SUMMARY_HEADER_WIDTH)
@@ -1517,9 +1518,9 @@ static int patch_update_file(struct add_p_state *s,
 		else
 			prompt_mode_type = PROMPT_HUNK;
 
-		printf("%s(%"PRIuMAX"/%"PRIuMAX") ", s->s.prompt_color,
-			      (uintmax_t)hunk_index + 1,
-			      (uintmax_t)(file_diff->hunk_nr
+		printf("%s(%"PRIuPTR"/%"PRIuPTR") ", s->s.prompt_color,
+			      hunk_index + 1,
+			      (file_diff->hunk_nr
 						? file_diff->hunk_nr
 						: 1));
 		printf(_(s->mode->prompt_mode[prompt_mode_type]),
@@ -1625,8 +1626,8 @@ soft_increment:
 				hunk_index = response - 1;
 			else
 				err(s,
-				    Q_("Sorry, only "PRIuMAX" hunk available.",
-				       "Sorry, only "PRIuMAX" hunks available.",
+				    Q_("Sorry, only %"PRIuPTR" hunk available.",
+				       "Sorry, only %"PRIuPTR" hunks available.",
 					  file_diff->hunk_nr),
 					  file_diff->hunk_nr);
 		} else if (s->answer.buf[0] == '/') {
