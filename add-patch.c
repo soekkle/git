@@ -699,12 +699,14 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		else
 			new_offset += delta;
 
-		strbuf_addf(out, "@@ -%lu", old_offset);
+		strbuf_addf(out, "@@ -%" PRIuMAX, (uintmax_t)old_offset);
 		if (header->old_count != 1)
-			strbuf_addf(out, ",%lu", header->old_count);
-		strbuf_addf(out, " +%lu", new_offset);
+			strbuf_addf(out, ",%" PRIuMAX,
+				    (uintmax_t)header->old_count);
+		strbuf_addf(out, " +%" PRIuMAX, (uintmax_t)new_offset);
 		if (header->new_count != 1)
-			strbuf_addf(out, ",%lu", header->new_count);
+			strbuf_addf(out, ",%" PRIuMAX,
+				    (uintmax_t)header->new_count);
 		strbuf_addstr(out, " @@");
 
 		if (len)
@@ -1065,11 +1067,13 @@ next_hunk_line:
 
 	/* last hunk simply gets the rest */
 	if (header->old_offset != remaining.old_offset)
-		BUG("miscounted old_offset: %lu != %lu",
-		    header->old_offset, remaining.old_offset);
+		BUG("miscounted old_offset: %"PRIuMAX" != %"PRIuMAX,
+		    (uintmax_t)header->old_offset,
+		    (uintmax_t)remaining.old_offset);
 	if (header->new_offset != remaining.new_offset)
-		BUG("miscounted new_offset: %lu != %lu",
-		    header->new_offset, remaining.new_offset);
+		BUG("miscounted new_offset: %"PRIuMAX" != %"PRIuMAX,
+		    (uintmax_t)header->new_offset,
+		    (uintmax_t)remaining.new_offset);
 	header->old_count = remaining.old_count;
 	header->new_count = remaining.new_count;
 	hunk->end = end;
@@ -1353,9 +1357,10 @@ static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
 	struct strbuf *plain = &s->plain;
 	size_t len = out->len, i;
 
-	strbuf_addf(out, " -%lu,%lu +%lu,%lu ",
-		    header->old_offset, header->old_count,
-		    header->new_offset, header->new_count);
+	strbuf_addf(out,
+		    " -%"PRIuMAX",%"PRIuMAX" +%"PRIuMAX",%"PRIuMAX" ",
+		    (uintmax_t)header->old_offset, (uintmax_t)header->old_count,
+		    (uintmax_t)header->new_offset, (uintmax_t)header->new_count);
 	if (out->len - len < SUMMARY_HEADER_WIDTH)
 		strbuf_addchars(out, ' ',
 				SUMMARY_HEADER_WIDTH + len - out->len);
@@ -1518,8 +1523,8 @@ static int patch_update_file(struct add_p_state *s,
 			prompt_mode_type = PROMPT_HUNK;
 
 		printf("%s(%"PRIuMAX"/%"PRIuMAX") ", s->s.prompt_color,
-			      (uintmax_t)hunk_index + 1,
-			      (uintmax_t)(file_diff->hunk_nr
+		       (uintmax_t)hunk_index + 1,
+		       (uintmax_t)(file_diff->hunk_nr
 						? file_diff->hunk_nr
 						: 1));
 		printf(_(s->mode->prompt_mode[prompt_mode_type]),
@@ -1625,10 +1630,10 @@ soft_increment:
 				hunk_index = response - 1;
 			else
 				err(s,
-				    Q_("Sorry, only "PRIuMAX" hunk available.",
-				       "Sorry, only "PRIuMAX" hunks available.",
-					  file_diff->hunk_nr),
-					  file_diff->hunk_nr);
+				    Q_("Sorry, only %"PRIuMAX" hunk available.",
+				       "Sorry, only %"PRIuMAX" hunks available.",
+				       (uintmax_t)file_diff->hunk_nr),
+				    (uintmax_t)file_diff->hunk_nr);
 		} else if (s->answer.buf[0] == '/') {
 			regex_t regex;
 			int ret;
