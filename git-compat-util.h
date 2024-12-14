@@ -292,6 +292,13 @@ static inline int _have_unix_sockets(void)
 #include <sys/sysctl.h>
 #endif
 
+#if SIZE_MAX == ULONG_MAX
+#define str_to_size_t strtoul
+#else
+#define str_to_size_t strtoull
+#endif
+
+
 /* Used by compat/win32/path-utils.h, and more */
 static inline int is_xplatform_dir_sep(int c)
 {
