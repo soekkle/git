@@ -242,7 +242,7 @@ static struct patch_mode patch_mode_worktree_nothead = {
 };
 
 struct hunk_header {
-	unsigned long old_offset, old_count, new_offset, new_count;
+	size_t old_offset, old_count, new_offset, new_count;
 	/*
 	 * Start/end offsets to the extra text after the second `@@` in the
 	 * hunk header, e.g. the function signature. This is expected to
@@ -322,11 +322,12 @@ static void setup_child_process(struct add_p_state *s,
 }
 
 static int parse_range(const char **p,
-		       unsigned long *offset, unsigned long *count)
+		       size_t *offset, size_t *count)
 {
 	char *pend;
-
-	*offset = strtoul(*p, &pend, 10);
+	*offset = str_to_size_t(*p, &pend, 10);
+	if (errno == ERANGE)
+		return error(_("Number is too large for this field"));
 	if (pend == *p)
 		return -1;
 	if (*pend != ',') {
@@ -334,7 +335,9 @@ static int parse_range(const char **p,
 		*p = pend;
 		return 0;
 	}
-	*count = strtoul(pend + 1, (char **)p, 10);
+	*count = str_to_size_t(pend + 1, (char **)p, 10);
+	if (errno == ERANGE)
+		return error(_("Number is too large for this field"));
 	return *p == pend + 1 ? -1 : 0;
 }
 
@@ -676,8 +679,8 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		 */
 		const char *p;
 		size_t len;
-		unsigned long old_offset = header->old_offset;
-		unsigned long new_offset = header->new_offset;
+		size_t old_offset = header->old_offset;
+		size_t new_offset = header->new_offset;
 
 		if (!colored) {
 			p = s->plain.buf + header->extra_start;
@@ -703,12 +706,14 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		else
 			new_offset += delta;
 
-		strbuf_addf(out, "@@ -%lu", old_offset);
+		strbuf_addf(out, "@@ -%" PRIuMAX, (uintmax_t)old_offset);
 		if (header->old_count != 1)
-			strbuf_addf(out, ",%lu", header->old_count);
-		strbuf_addf(out, " +%lu", new_offset);
+			strbuf_addf(out, ",%" PRIuMAX,
+				    (uintmax_t)header->old_count);
+		strbuf_addf(out, " +%" PRIuMAX, (uintmax_t)new_offset);
 		if (header->new_count != 1)
-			strbuf_addf(out, ",%lu", header->new_count);
+			strbuf_addf(out, ",%" PRIuMAX,
+				    (uintmax_t)header->new_count);
 		strbuf_addstr(out, " @@");
 
 		if (len)
@@ -1069,11 +1074,13 @@ next_hunk_line:
 
 	/* last hunk simply gets the rest */
 	if (header->old_offset != remaining.old_offset)
-		BUG("miscounted old_offset: %lu != %lu",
-		    header->old_offset, remaining.old_offset);
+		BUG("miscounted old_offset: %"PRIuMAX" != %"PRIuMAX,
+		    (uintmax_t)header->old_offset,
+		    (uintmax_t)remaining.old_offset);
 	if (header->new_offset != remaining.new_offset)
-		BUG("miscounted new_offset: %lu != %lu",
-		    header->new_offset, remaining.new_offset);
+		BUG("miscounted new_offset: %"PRIuMAX" != %"PRIuMAX,
+		    (uintmax_t)header->new_offset,
+		    (uintmax_t)remaining.new_offset);
 	header->old_count = remaining.old_count;
 	header->new_count = remaining.new_count;
 	hunk->end = end;
@@ -1357,9 +1364,10 @@ static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
 	struct strbuf *plain = &s->plain;
 	size_t len = out->len, i;
 
-	strbuf_addf(out, " -%lu,%lu +%lu,%lu ",
-		    header->old_offset, header->old_count,
-		    header->new_offset, header->new_count);
+	strbuf_addf(out,
+		    " -%"PRIuMAX",%"PRIuMAX" +%"PRIuMAX",%"PRIuMAX" ",
+		    (uintmax_t)header->old_offset, (uintmax_t)header->old_count,
+		    (uintmax_t)header->new_offset, (uintmax_t)header->new_count);
 	if (out->len - len < SUMMARY_HEADER_WIDTH)
 		strbuf_addchars(out, ' ',
 				SUMMARY_HEADER_WIDTH + len - out->len);
@@ -1628,10 +1636,11 @@ soft_increment:
 			else if (0 < response && response <= file_diff->hunk_nr)
 				hunk_index = response - 1;
 			else
-				err(s, Q_("Sorry, only %d hunk available.",
-					  "Sorry, only %d hunks available.",
-					  file_diff->hunk_nr),
-				    (int)file_diff->hunk_nr);
+				err(s,
+				    Q_("Sorry, only %"PRIuMAX" hunk available.",
+				       "Sorry, only %"PRIuMAX" hunks available.",
+				       (uintmax_t)file_diff->hunk_nr),
+				    (uintmax_t)file_diff->hunk_nr);
 		} else if (s->answer.buf[0] == '/') {
 			regex_t regex;
 			int ret;
