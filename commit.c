@@ -468,8 +468,8 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	struct object_id parent;
 	struct commit_list **pptr;
 	struct commit_graft *graft;
-	const int tree_entry_len = the_hash_algo->hexsz + 5;
-	const int parent_entry_len = the_hash_algo->hexsz + 7;
+	const size_t tree_entry_len = the_hash_algo->hexsz + 5;
+	const size_t parent_entry_len = the_hash_algo->hexsz + 7;
 	struct tree *tree;
 
 	if (item->object.parsed)
@@ -1123,10 +1123,10 @@ static const char *gpg_sig_headers[] = {
 
 int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo)
 {
-	int inspos, copypos;
+	ssize_t inspos, copypos;
 	const char *eoh;
 	const char *gpg_sig_header = gpg_sig_headers[hash_algo_by_ptr(algo)];
-	int gpg_sig_header_len = strlen(gpg_sig_header);
+	size_t gpg_sig_header_len = strlen(gpg_sig_header);
 
 	/* find the end of the header */
 	eoh = strstr(buf->buf, "\n\n");
@@ -1539,7 +1539,7 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	return result;
 }
 
-static int find_invalid_utf8(const char *buf, int len)
+static int find_invalid_utf8(const char *buf, size_t len)
 {
 	int offset = 0;
 	static const unsigned int max_codepoint[] = {
@@ -1548,7 +1548,7 @@ static int find_invalid_utf8(const char *buf, int len)
 
 	while (len) {
 		unsigned char c = *buf++;
-		int bytes, bad_offset;
+		size_t bytes, bad_offset;
 		unsigned int codepoint;
 		unsigned int min_val, max_val;
 
