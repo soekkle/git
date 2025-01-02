@@ -219,6 +219,11 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
 int uname(struct utsname *buf);
+#ifdef _WIN64
+# define strtouq strtoull
+#elif defined _WIN32
+# define strtouq strtoul
+#endif
 
 /*
  * replacements of existing functions
