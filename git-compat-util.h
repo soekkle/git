@@ -281,9 +281,11 @@ static inline int _have_unix_sockets(void)
 #ifdef HAVE_BSD_SYSCTL
 #include <sys/sysctl.h>
 #endif
-#ifndef _SVID_SOURCE
-#define strtouq strtoul
-#endif // !_SVID_SOURCE
+#if defined _WIN64
+# define strtos strtoull
+#else
+#define strtos strtoul
+#endif
 
 
 /* Used by compat/win32/path-utils.h, and more */

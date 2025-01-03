@@ -324,7 +324,7 @@ static int parse_range(const char **p,
 		       size_t *offset, size_t *count)
 {
 	char *pend;
-	*offset = strtouq(*p, &pend, 10);
+	*offset = strtos(*p, &pend, 10);
 	if (errno == ERANGE)
 		return error("Number dose not fit datatype");
 	if (pend == *p)
@@ -334,7 +334,7 @@ static int parse_range(const char **p,
 		*p = pend;
 		return 0;
 	}
-	*count = strtouq(pend + 1, (char **)p, 10);
+	*count = strtos(pend + 1, (char **)p, 10);
 	if (errno == ERANGE)
 		return error("Number dose not fit datatype");
 	return *p == pend + 1 ? -1 : 0;
