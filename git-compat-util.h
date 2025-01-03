@@ -281,6 +281,10 @@ static inline int _have_unix_sockets(void)
 #ifdef HAVE_BSD_SYSCTL
 #include <sys/sysctl.h>
 #endif
+#ifndef _SVID_SOURCE
+#define strtouq strtoul
+#endif // !_SVID_SOURCE
+
 
 /* Used by compat/win32/path-utils.h, and more */
 static inline int is_xplatform_dir_sep(int c)
